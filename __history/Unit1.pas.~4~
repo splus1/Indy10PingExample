@@ -1,0 +1,70 @@
+unit Unit1;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, IdBaseComponent,
+  IdComponent, IdRawBase, IdRawClient, IdIcmpClient;
+
+type
+  TForm1 = class(TForm)
+    ICMP1: TIdIcmpClient;
+    EHost: TEdit;
+    ListBox1: TListBox;
+    Button1: TButton;
+    procedure Button1Click(Sender: TObject);
+    procedure ICMP1Reply(ASender: TComponent; const AReplyStatus: TReplyStatus);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm1.Button1Click(Sender: TObject);
+var
+  count : integer;
+begin
+  ICMP1.OnReply := ICMP1Reply;
+  ICMP1.ReceiveTimeout := 1000;
+  Button1.Enabled := False;
+  try
+    ICMP1.Host := EHost.Text;
+    for count := 1 to 4 do
+      begin
+        ICMP1.Ping();
+        Application.ProcessMessages;
+      end;
+  finally
+    Button1.Enabled := True
+  end;
+
+
+end;
+
+procedure TForm1.ICMP1Reply(ASender: TComponent; const AReplyStatus: TReplyStatus);
+var
+  sTime : string;
+begin
+  if (AReplyStatus.MsRoundTripTime = 0) then
+    sTime := '<1'
+  else
+    sTime := '=';
+
+  ListBox1.Items.Add(Format('%d bytes from %s: icmp_seq=%d ttl=%d time%s%d ms',
+  [AReplyStatus.BytesReceived,
+  AReplyStatus.FromIpAddress,
+  AReplyStatus.SequenceId,
+  AReplyStatus.TimeToLive,
+  sTime,
+  AReplyStatus.MsRoundTripTime]));
+end;
+
+end.
